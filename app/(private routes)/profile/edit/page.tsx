@@ -9,22 +9,24 @@ import { useUserStore } from "@/lib/store/userStore";
 
 export default function Edit() {
   const router = useRouter();
-  const { user, setUser } = useUserStore();
+  const { setUser } = useUserStore();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+
   useEffect(() => {
     getMe().then((user) => {
       setUsername(user.username ?? "");
       setEmail(user.email ?? "");
       setUser(user);
     });
-  }, [user, setUser]);
+  }, [setUser]);
 
-  const handleSaveUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSaveUser = async (formData: FormData) => {
+    const username = formData.get("username") as string;
     const updatedUser = await updateMe({ username });
     setUser(updatedUser);
   };
+
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
@@ -38,15 +40,15 @@ export default function Edit() {
           className={css.avatar}
         />
 
-        <form className={css.profileInfo} onSubmit={handleSaveUser}>
+        <form className={css.profileInfo} action={handleSaveUser}>
           <div className={css.usernameWrapper}>
             <label htmlFor="username">Username:</label>
             <input
               id="username"
-              value={username}
+              name="username"
+              defaultValue={username}
               type="text"
               className={css.input}
-              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
