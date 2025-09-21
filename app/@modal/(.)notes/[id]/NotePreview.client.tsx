@@ -1,41 +1,49 @@
 "use client";
 
+import { fetchNoteById } from "@/lib/api/clientApi";
 import { useQuery } from "@tanstack/react-query";
-import { fetchNoteById } from "@/lib/api";
-import { Note } from "@/types/note";
+import css from "./NotePreview.module.css";
+import { useParams, useRouter } from "next/navigation";
 import Modal from "@/components/Modal/Modal";
-import css from "./NotePreview.client.module.css";
-import { useRouter } from "next/navigation";
 
-interface Props {
-  id: string;
-}
-
-export default function NotePreview({ id }: Props) {
+export default function PreviewModal() {
   const router = useRouter();
-
-  const { data: note, isLoading, isError } = useQuery<Note, Error>({
+  const close = () => router.back();
+  const { id } = useParams<{ id: string }>();
+  const {
+    data: note,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["note", id],
     queryFn: () => fetchNoteById(id),
+    enabled: !!id,
     refetchOnMount: false,
   });
-
-  if (isLoading) return <p>Loading note...</p>;
-  if (isError || !note) return <p>Error loading note</p>;
+  if (isLoading) {
+    return <p>Loading, please wait...</p>;
+  }
+  if (error || !note) {
+    return <p>Something went wrong.</p>;
+  }
+  const formattedDate = note.createdAt && `Created at: ${note.createdAt}`;
 
   return (
-    <Modal onClose={() => router.back()}>
-      <div className={css.header}>
-        <h3>{note.title}</h3>
-        <button className={css.closeButton} onClick={() => router.back()}>
-          ×
-        </button>
+    <Modal onClose={close}>
+      <button onClick={close} className={css.backBtn}>
+        Close{" "}
+      </button>
+      <div>
+        <div className={css.container}>
+          <div className={css.item}>
+            <div className={css.header}>
+              <h2>{note.title}</h2>
+            </div>
+            <p className={css.content}>{note.content}</p>
+            <p className={css.date}>{formattedDate}</p>
+          </div>
+        </div>
       </div>
-      <p className={css.content}>{note.content}</p>
-      <p className={css.meta}>
-        <strong>Tag:</strong> {note.tag} <br />
-        <strong>Created:</strong> {new Date(note.createdAt).toLocaleString()}
-      </p>
     </Modal>
   );
 }
